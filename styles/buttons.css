@@ -1,0 +1,20 @@
+.flatButton {
+    background: #0070f3;
+    padding: 10px 20px;
+    color: white;
+    outline: none;
+    border: none;
+    cursor: pointer;
+}
+
+.textButton {
+    background: inherit;
+    padding: 10px 10px;
+    outline: none;
+    border: none;
+    cursor: pointer;
+}
+
+.textButton:hover {
+    background: #eee;
+}
