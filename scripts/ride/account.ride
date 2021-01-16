@@ -1,0 +1,24 @@
+{-# STDLIB_VERSION 2 #-}
+{-# CONTENT_TYPE EXPRESSION #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+#define public keys
+let alicePubKey  = base58't5PVp6CkZwpPk7TtbwqeqHTCrGdzwMfwZadPzSYRAsm'
+let bobPubKey    = base58'HD1Yvs87GYi3sYdqmZhSPR7QGYefPp3RAb8LQQyGQpJT'
+let cooperPubKey = base58'HZ6ZANLnmTe1YySS8m7dRdPACVTdiWq4HauEmkEw22W7'
+
+#check whoever provided the valid proof
+let aliceSigned  = if(sigVerify(tx.bodyBytes, tx.proofs[0], alicePubKey  )
+                  || sigVerify(tx.bodyBytes, tx.proofs[1], alicePubKey  )
+                  || sigVerify(tx.bodyBytes, tx.proofs[2], alicePubKey  )) then 1 else 0
+
+let bobSigned    = if(sigVerify(tx.bodyBytes, tx.proofs[0], bobPubKey  )
+                   || sigVerify(tx.bodyBytes, tx.proofs[1], bobPubKey  )
+                   || sigVerify(tx.bodyBytes, tx.proofs[2], bobPubKey  )) then 1 else 0
+
+let cooperSigned = if(sigVerify(tx.bodyBytes, tx.proofs[0], cooperPubKey  )
+                  || sigVerify(tx.bodyBytes, tx.proofs[1], cooperPubKey  )
+                  || sigVerify(tx.bodyBytes, tx.proofs[2], cooperPubKey  )) then 1 else 0
+
+#sum up every valid proof to get at least 2
+aliceSigned + bobSigned + cooperSigned >= 2
