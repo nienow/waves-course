@@ -2,23 +2,45 @@
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
+let alicePubKey  = base58't5PVp6CkZwpPk7TtbwqeqHTCrGdzwMfwZadPzSYRAsm'
+let bobPubKey    = base58'HD1Yvs87GYi3sYdqmZhSPR7QGYefPp3RAb8LQQyGQpJT'
+let cooperPubKey = base58'HZ6ZANLnmTe1YySS8m7dRdPACVTdiWq4HauEmkEw22W7'
+
 @Callable(i)
-func purchase() = {
+func purchase(item: String) = {
     let pmt = i.payment.extract()
     if (pmt.assetId.isDefined()) then throw("Can only use Waves")
     else {
         let customerAddress = i.caller.bytes.toBase58String()
-        let price = match getInteger(this, "item_A_coupon_price") {
+        let price = match getInteger(this, "item_" + item + "_price") {
             case a: Int => a
             case _ => 0
         }
-        if (pmt.amount < price) then throw("Payment sent is not enough")
+        if (price == 0) then throw("Coupon not found")
+        else if (pmt.amount < price) then throw("Payment sent is not enough")
         else if (pmt.amount > price) then throw("Payment sent is too much")
         else {
             WriteSet([
-                DataEntry("status:purchase_item_A_customer_" + customerAddress, "confirmed"),
-                DataEntry("price:purchase_item_A_customer_" + customerAddress, price)
+                DataEntry("status:purchase_item_" + item + "_customer_" + customerAddress, "confirmed"),
+                DataEntry("price:purchase_item_" + item + "_customer_" + customerAddress, price)
             ])
         }
     }
+}
+
+@Verifier(tx)
+func multisig() = {
+    let aliceSigned  = if(sigVerify(tx.bodyBytes, tx.proofs[0], alicePubKey  )
+                      || sigVerify(tx.bodyBytes, tx.proofs[1], alicePubKey  )
+                      || sigVerify(tx.bodyBytes, tx.proofs[2], alicePubKey  )) then 1 else 0
+
+    let bobSigned    = if(sigVerify(tx.bodyBytes, tx.proofs[0], bobPubKey  )
+                       || sigVerify(tx.bodyBytes, tx.proofs[1], bobPubKey  )
+                       || sigVerify(tx.bodyBytes, tx.proofs[2], bobPubKey  )) then 1 else 0
+
+    let cooperSigned = if(sigVerify(tx.bodyBytes, tx.proofs[0], cooperPubKey  )
+                      || sigVerify(tx.bodyBytes, tx.proofs[1], cooperPubKey  )
+                      || sigVerify(tx.bodyBytes, tx.proofs[2], cooperPubKey  )) then 1 else 0
+
+    aliceSigned + bobSigned + cooperSigned >= 2
 }
