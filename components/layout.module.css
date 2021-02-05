@@ -1,0 +1,23 @@
+.container {
+    max-width: 36rem;
+    padding: 0 1rem;
+    margin: 3rem auto 6rem;
+}
+
+.header {
+    padding: 20px 50px;
+    background-color: darkolivegreen;
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+.siteTitle {
+    font-size: 25px;
+    margin-right: 50px;
+}
+
+.siteLinks {
+    flex-grow: 1;
+    text-align: right;
+}

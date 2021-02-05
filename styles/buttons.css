@@ -1,5 +1,5 @@
 .flatButton {
-    background: #0070f3;
+    background: darkolivegreen;
     padding: 10px 20px;
     color: white;
     outline: none;
@@ -16,5 +16,6 @@
 }
 
 .textButton:hover {
-    background: #eee;
+    background: darkolivegreen;
+    color: white;
 }

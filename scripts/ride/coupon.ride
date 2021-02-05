@@ -2,9 +2,45 @@
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
-let alicePubKey  = base58't5PVp6CkZwpPk7TtbwqeqHTCrGdzwMfwZadPzSYRAsm'
-let bobPubKey    = base58'HD1Yvs87GYi3sYdqmZhSPR7QGYefPp3RAb8LQQyGQpJT'
-let cooperPubKey = base58'HZ6ZANLnmTe1YySS8m7dRdPACVTdiWq4HauEmkEw22W7'
+func getItemKey(supplierAddress: String, title: String) = {
+    let key = supplierAddress + title;
+    key.toBytes().sha256().toBase58String()
+}
+
+@Callable(i)
+func register(name: String) = {
+    let supplierAddress = i.caller.bytes.toBase58String()
+    let existingSupplier = match getString(this, "supplier:" + supplierAddress) {
+      case a: String => a
+      case _ => ""
+    }
+    if (existingSupplier != "") then throw("Supplier already exists")
+    else if (name == "") then throw("Supplier name missing")
+    else {
+      WriteSet([
+        DataEntry("supplier:" + supplierAddress, name)
+      ])
+    }
+}
+
+@Callable(i)
+func addItem(title: String, price: Int, data: String) = {
+    let supplierAddress = i.caller.bytes.toBase58String()
+    let itemKey = getItemKey(supplierAddress, title)
+    let supplierName = match getString(this, "supplier:" + supplierAddress) {
+      case a: String => a
+      case _ => ""
+    }
+    if (supplierName == "") then throw("Supplier not registered")
+    else if (price <= 0) then throw("Price has to be greater than 0")
+    else {
+      WriteSet([
+        DataEntry("item_supplier:" + itemKey, supplierAddress),
+        DataEntry("item_price:" + itemKey, price),
+        DataEntry("item_data:" + itemKey, data)
+      ])
+    }
+}
 
 @Callable(i)
 func purchase(item: String) = {
@@ -12,7 +48,7 @@ func purchase(item: String) = {
     if (pmt.assetId.isDefined()) then throw("Can only use Waves")
     else {
         let customerAddress = i.caller.bytes.toBase58String()
-        let price = match getInteger(this, "item_" + item + "_price") {
+        let price = match getInteger(this, "item_price:" + item) {
             case a: Int => a
             case _ => 0
         }
@@ -29,18 +65,4 @@ func purchase(item: String) = {
 }
 
 @Verifier(tx)
-func multisig() = {
-    let aliceSigned  = if(sigVerify(tx.bodyBytes, tx.proofs[0], alicePubKey  )
-                      || sigVerify(tx.bodyBytes, tx.proofs[1], alicePubKey  )
-                      || sigVerify(tx.bodyBytes, tx.proofs[2], alicePubKey  )) then 1 else 0
-
-    let bobSigned    = if(sigVerify(tx.bodyBytes, tx.proofs[0], bobPubKey  )
-                       || sigVerify(tx.bodyBytes, tx.proofs[1], bobPubKey  )
-                       || sigVerify(tx.bodyBytes, tx.proofs[2], bobPubKey  )) then 1 else 0
-
-    let cooperSigned = if(sigVerify(tx.bodyBytes, tx.proofs[0], cooperPubKey  )
-                      || sigVerify(tx.bodyBytes, tx.proofs[1], cooperPubKey  )
-                      || sigVerify(tx.bodyBytes, tx.proofs[2], cooperPubKey  )) then 1 else 0
-
-    aliceSigned + bobSigned + cooperSigned >= 2
-}
+func verify() = sigVerify(tx.bodyBytes, tx.proofs[0], tx.senderPublicKey)

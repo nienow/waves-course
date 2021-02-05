@@ -1,0 +1,13 @@
+.textInput {
+    margin-bottom: 10px;
+}
+
+.textInput input {
+    padding: 10px 20px;
+}
+
+.label {
+    text-align: left;
+    margin-bottom: 3px;
+    font-size: 20px;
+}
